@@ -16,7 +16,7 @@ const initApiRoutes = (app) => {
   router.post("/logout", apiController.handleLogout);
   router.post("/auth/google", apiController.handleLoginGoogle);
   // account to get token
-  router.get("/account", checkToken, userController.getAccountData);
+  // router.get("/account", checkToken, userController.getAccountData);
   // /token
   router.use(checkToken, checkPermission);
 
