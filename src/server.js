@@ -17,7 +17,10 @@ app.use(cookieParser());
 // accept connect to react
 app.use(
   cors({
-    origin: "https://fullstack-frontend-77iy.vercel.app",
+    origin: [
+      "http://localhost:3001",
+      "https://fullstack-frontend-77iy.vercel.app",
+    ],
     credentials: true,
   }),
 );
