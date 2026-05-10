@@ -43,9 +43,9 @@ const handleLogin = async (req, res) => {
     if (data && data.EC === 0) {
       res.cookie("token", data.DT.access_token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-        path: "/", // 👈 thêm
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+        path: "/",
         maxAge: 24 * 60 * 60 * 1000,
       });
     }

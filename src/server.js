@@ -18,7 +18,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: [
-      "http://localhost:3001",
+      "http://localhost:3000",
       "https://fullstack-frontend-77iy.vercel.app",
     ],
     credentials: true,
@@ -28,7 +28,7 @@ app.use(
 configViewEngine(app);
 initWebRoutes(app);
 initApiRoutes(app);
-const PORT = Number(process.env.PORT) || 8081;
+const PORT = Number(process.env.PORT) || 8080;
 const HOST = process.env.HOST || "::";
 const server = app.listen({ port: PORT, host: HOST, ipv6Only: false }, () => {
   console.log(`backend listening on http://localhost:${PORT}`);
