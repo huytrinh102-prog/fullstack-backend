@@ -16,11 +16,7 @@
     "dialect": "mysql"
   },
   "production": {
-    "username": "env(MYSQLUSER)",
-    "password": "env(MYSQLPASSWORD)",
-    "database": "env(MYSQLDATABASE)",
-    "host": "env(MYSQLHOST)",
-    "port": "env(MYSQLPORT)",
+    "use_env_variable": "DATABASE_URL",
     "dialect": "mysql",
     "logging": false,
     "define": { "freezeTableName": true }
