@@ -50,7 +50,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+// app.options("*", cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 // init wed routes
 configViewEngine(app);
 initWebRoutes(app);
