@@ -40,15 +40,14 @@ const handleRegister = async (req, res) => {
 const handleLogin = async (req, res) => {
   try {
     let data = await loginRegisterService.Login(req.body);
-    if (data && data.EC === 0) {
-      res.cookie("token", data.DT.access_token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        path: "/",
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-    }
+    // if (data && data.EC === 0) {
+    //   res.cookie("token", data.DT.access_token, {
+    //     httpOnly: true,
+    //     secure: true,
+    //     sameSite: "None",
+    //     path: "/",
+    //     maxAge: 24 * 60 * 60 * 1000,
+    //   });
     return res.status(200).json({
       EM: data.EM,
       EC: data.EC,
@@ -64,32 +63,18 @@ const handleLogin = async (req, res) => {
   }
 };
 const handleLogout = async (req, res) => {
-  try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-      path: "/",
-    });
-    res.json({ message: "Logged out" });
-  } catch (error) {
-    console.log(error);
-  }
+  return res.status(200).json({
+    EM: "Logout success",
+    EC: 0,
+    DT: "",
+  });
 };
+
 const handleLoginGoogle = async (req, res) => {
   try {
     let { token } = req.body;
     console.log("checktoken gg ", token);
     let data = await LoginRegisterService.googleLogin(token);
-    if (data && data.EC === 0) {
-      res.cookie("token", data.DT.access_token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        path: "/",
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-    }
     return res.status(200).json({
       EM: data.EM,
       EC: data.EC,

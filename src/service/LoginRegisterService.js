@@ -74,7 +74,7 @@ const Login = async (data) => {
 
     const userWithRole = await db.User.findOne({
       where: { id: user.id },
-      attributes: ["id", "email", "username"],
+      attributes: ["id", "email", "username", "avatarUrl"],
       include: {
         model: db.Group,
         attributes: ["id", "name", "description"],
@@ -89,12 +89,14 @@ const Login = async (data) => {
       email: userWithRole?.email || "",
       username: userWithRole?.username || "",
       groupname: userWithRole?.Group?.name || "",
+      avatarUrl: userWithRole?.avatarUrl || "",
     };
     const Roles = userWithRole?.Group?.Roles?.map((r) => r) || [];
     const payload = {
       email: userWithRole.email,
       id: userWithRole.id,
       username: userWithRole.username,
+      avatarUrl: userWithRole.avatarUrl,
       roles: Roles,
       isAdmin: isAdmin,
     };
