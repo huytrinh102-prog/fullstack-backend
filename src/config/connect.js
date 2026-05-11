@@ -26,6 +26,8 @@ const sequelize = buildSequelize();
 const connection = async () => {
   try {
     await sequelize.authenticate();
+    const [[d]] = await sequelize.query("SELECT DATABASE() AS db");
+    console.log("DB_IN_USE:", d);
     console.log("Connection has been established successfully.");
   } catch (error) {
     console.error("Unable to connect to the database:", error);
