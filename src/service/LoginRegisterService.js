@@ -103,7 +103,7 @@ const Login = async (data) => {
     let access_token = "";
     try {
       access_token = jwt.sign(payload, process.env.jwtKey, {
-        expiresIn: "1d",
+        expiresIn: "15m",
       });
     } catch (error) {
       console.log(error);
@@ -166,7 +166,7 @@ const googleLogin = async (token) => {
       isAdmin: isAdmin,
     };
     const access_token = jwt.sign(payload, process.env.jwtKey, {
-      expiresIn: "1d",
+      expiresIn: "15m",
     });
     return {
       EC: 0,

@@ -6,7 +6,6 @@ import connection from "./config/connect.js";
 import cors from "cors";
 import initApiRoutes from "./routes/api.js";
 import cookieParser from "cookie-parser";
-import { checkToken } from "./middleware/jwt-action.js";
 
 dotenv.config();
 const app = express(); // req.body undifile
@@ -14,29 +13,58 @@ app.use(express.urlencoded({ extended: true })); // form submit (x-www-form-urle
 app.use(express.json());
 // cookie
 app.use(cookieParser());
-// accept connect to react
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "https://fullstack-frontend-77iy.vercel.app",
-    ],
-    credentials: true,
-  }),
-);
+
+// CORS
+// Local dev + explicit allowlist via env:
+// - CORS_ORIGINS="https://app.vercel.app,https://mydomain.com"
+// Optional:
+// - ALLOW_VERCEL_WILDCARD="true" to allow https://*.vercel.app (preview deploys)
+const parseOrigins = (value) =>
+  String(value || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+const staticAllowedOrigins = new Set([
+  "http://localhost:3000",
+  "https://fullstack-frontend-77iy.vercel.app",
+  ...parseOrigins(process.env.CORS_ORIGINS),
+]);
+
+const allowVercelWildcard =
+  String(process.env.ALLOW_VERCEL_WILDCARD || "").toLowerCase() === "true";
+const vercelAppRegex = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;
+
+const corsOptions = {
+  origin(origin, callback) {
+    // Allow non-browser clients / same-origin server calls
+    if (!origin) return callback(null, true);
+
+    if (staticAllowedOrigins.has(origin)) return callback(null, true);
+    if (allowVercelWildcard && vercelAppRegex.test(origin))
+      return callback(null, true);
+
+    return callback(new Error(`CORS blocked origin: ${origin}`));
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 // init wed routes
 configViewEngine(app);
 initWebRoutes(app);
 initApiRoutes(app);
+
+// 404 handler (keep after routes)
+app.use((req, res) => {
+  return res.status(404).send("not found 404");
+});
+
 const PORT = Number(process.env.PORT) || 8080;
 const HOST = process.env.HOST || "::";
 const server = app.listen({ port: PORT, host: HOST, ipv6Only: false }, () => {
   console.log(`backend listening on http://localhost:${PORT}`);
-});
-
-// middleware
-app.use((req, res, next) => {
-  return res.send("not found 404");
 });
 
 // check connection
