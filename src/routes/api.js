@@ -13,6 +13,7 @@ const initApiRoutes = (app) => {
   // login logout
   router.post("/register", apiController.handleRegister);
   router.post("/login", apiController.handleLogin);
+  router.post("/refresh-token", apiController.handleRefreshToken);
   router.post("/logout", apiController.handleLogout);
   router.post("/auth/google", apiController.handleLoginGoogle);
   // account to get token

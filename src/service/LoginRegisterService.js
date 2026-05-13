@@ -6,6 +6,47 @@ import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
 import { checkToken } from "../middleware/jwt-action.js";
 
+const buildUserWithRoles = async (userId) => {
+  const userWithRole = await db.User.findOne({
+    where: { id: userId },
+    attributes: ["id", "email", "username", "avatarUrl"],
+    include: {
+      model: db.Group,
+      attributes: ["id", "name", "description"],
+      include: {
+        model: db.Role,
+        attributes: ["id", "url", "description"],
+      },
+    },
+  });
+
+  const isAdmin = userWithRole?.Group?.name === "Admin";
+  const roles = userWithRole?.Group?.Roles?.map((r) => r) || [];
+
+  const userData = {
+    id: userWithRole?.id,
+    email: userWithRole?.email || "",
+    username: userWithRole?.username || "",
+    groupname: userWithRole?.Group?.name || "",
+    avatarUrl: userWithRole?.avatarUrl || "",
+  };
+
+  const payload = {
+    email: userWithRole.email,
+    id: userWithRole.id,
+    username: userWithRole.username,
+    avatarUrl: userWithRole.avatarUrl,
+    roles,
+    isAdmin,
+  };
+
+  return { userData, payload };
+};
+
+const issueAccessToken = (payload) => {
+  return jwt.sign(payload, process.env.jwtKey, { expiresIn: "15m" });
+};
+
 const Register = async (rawData, req, res) => {
   //check emai/phone password
   try {
@@ -72,48 +113,23 @@ const Login = async (data) => {
       };
     }
 
-    const userWithRole = await db.User.findOne({
-      where: { id: user.id },
-      attributes: ["id", "email", "username", "avatarUrl"],
-      include: {
-        model: db.Group,
-        attributes: ["id", "name", "description"],
-        include: {
-          model: db.Role,
-          attributes: ["id", "url", "description"],
-        },
-      },
-    });
-    const isAdmin = userWithRole?.Group?.name === "Admin";
-    const userData = {
-      email: userWithRole?.email || "",
-      username: userWithRole?.username || "",
-      groupname: userWithRole?.Group?.name || "",
-      avatarUrl: userWithRole?.avatarUrl || "",
-    };
-    const Roles = userWithRole?.Group?.Roles?.map((r) => r) || [];
-    const payload = {
-      email: userWithRole.email,
-      id: userWithRole.id,
-      username: userWithRole.username,
-      avatarUrl: userWithRole.avatarUrl,
-      roles: Roles,
-      isAdmin: isAdmin,
-    };
     let access_token = "";
     try {
-      access_token = jwt.sign(payload, process.env.jwtKey, {
-        expiresIn: "15m",
-      });
+      const { userData, payload } = await buildUserWithRoles(user.id);
+      access_token = issueAccessToken(payload);
+      return {
+        EM: "Login success",
+        EC: 0,
+        DT: { access_token: access_token, user: userData },
+      };
     } catch (error) {
       console.log(error);
+      return {
+        EM: "Error from server...",
+        EC: 1,
+        DT: "",
+      };
     }
-
-    return {
-      EM: "Login success",
-      EC: 0,
-      DT: { access_token: access_token, user: userData },
-    };
   } catch (error) {
     console.log(error);
     return {
@@ -139,35 +155,8 @@ const googleLogin = async (token) => {
         groupId: 4,
       });
     }
-    const userWithRole = await db.User.findOne({
-      where: { id: user.id },
-      attributes: ["id", "email", "username"],
-      include: {
-        model: db.Group,
-        attributes: ["id", "name", "description"],
-        include: {
-          model: db.Role,
-          attributes: ["id", "url", "description"],
-        },
-      },
-    });
-    const isAdmin = userWithRole?.Group?.name === "admin";
-    const userData = {
-      email: userWithRole?.email || "",
-      username: userWithRole?.username || "",
-      groupname: userWithRole?.Group?.name || "",
-    };
-    const Roles = userWithRole?.Group?.Roles?.map((r) => r) || [];
-    const payload = {
-      email: userWithRole.email,
-      id: userWithRole.id,
-      username: userWithRole.username,
-      roles: Roles,
-      isAdmin: isAdmin,
-    };
-    const access_token = jwt.sign(payload, process.env.jwtKey, {
-      expiresIn: "15m",
-    });
+    const { userData, payload } = await buildUserWithRoles(user.id);
+    const access_token = issueAccessToken(payload);
     return {
       EC: 0,
       EM: "Login success",
@@ -181,4 +170,19 @@ const googleLogin = async (token) => {
     };
   }
 };
-export default { Register, Login, googleLogin };
+const RefreshByUserId = async (userId) => {
+  try {
+    const { userData, payload } = await buildUserWithRoles(userId);
+    const access_token = issueAccessToken(payload);
+    return {
+      EC: 0,
+      EM: "Refresh success",
+      DT: { access_token: access_token, user: userData },
+    };
+  } catch (error) {
+    console.log(error);
+    return { EC: 1, EM: "Refresh failed", DT: "" };
+  }
+};
+
+export default { Register, Login, googleLogin, RefreshByUserId };
