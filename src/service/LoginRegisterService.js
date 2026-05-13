@@ -84,7 +84,7 @@ const Login = async (data) => {
         },
       },
     });
-    const isAdmin = userWithRole?.Group?.name === "admin";
+    const isAdmin = userWithRole?.Group?.name === "Admin";
     const userData = {
       email: userWithRole?.email || "",
       username: userWithRole?.username || "",
