@@ -4,25 +4,23 @@ import userController from "../controller/userController.js";
 import { checkPermission, checkToken } from "../middleware/jwt-action.js";
 import rolesController from "../controller/rolesController.js";
 import GroupRoleController from "../controller/GroupRoleController.js";
-import cloudinary from "../config/cloudinary.js";
 const router = express.Router();
 /**
  * @param {*} app :express appß
  */
 const initApiRoutes = (app) => {
-  // login logout
+  // puclic
   router.post("/login", apiController.handleLogin);
   router.post("/register", apiController.handleRegister);
   router.post("/auth/google", apiController.handleLoginGoogle);
-
+  router.post("/refresh-token", apiController.handleRefreshToken);
+  router.post("/logout", apiController.handleLogout);
   // CHECK TOKEN
   router.use(checkToken);
-
   router.get("/account", userController.getAccountData);
   router.post("/cloudinary/sign-avatar", userController.userAvatar);
   // PERMISSION
   router.use(checkPermission);
-
   // roles
   router.post("/role-create", rolesController.createRoles);
   router.get("/role-read", rolesController.getRoles);
