@@ -15,7 +15,7 @@ const create = async (data) => {
 
     const res = await db.Role.create({
       url: data.url,
-      desciption: data.desciption,
+      desciption: data.description,
     });
     console.log(res);
     return { EM: "create a new role success", EC: 0, DT: "" };
@@ -59,6 +59,13 @@ const read = async (page, limit, search, sort) => {
         {
           model: db.Group,
           attributes: ["name", "description"],
+          include: [
+            {
+              model: db.Role,
+              as: "roles",
+              attributes: ["id", "url", "description"],
+            },
+          ],
         },
       ],
     });
@@ -82,9 +89,10 @@ const read = async (page, limit, search, sort) => {
       };
     }
   } catch (error) {
-    console.log(error);
+    console.log("🔥 ROLE READ ERROR:", error);
+    console.log("🔥 DETAIL:", error?.original || error);
     return {
-      EM: "Error from server...",
+      EM: error.message,
       EC: 1,
       DT: "",
     };

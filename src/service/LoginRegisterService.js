@@ -4,8 +4,6 @@ import { Op } from "sequelize";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
-import { checkToken } from "../middleware/jwt-action.js";
-
 const buildUserWithRoles = async (userId) => {
   const userWithRole = await db.User.findOne({
     where: { id: userId },
@@ -15,32 +13,42 @@ const buildUserWithRoles = async (userId) => {
       attributes: ["id", "name", "description"],
       include: {
         model: db.Role,
+        as: "roles", // 🔥 CHUẨN
         attributes: ["id", "url", "description"],
       },
     },
   });
-  const isAdmin = userWithRole?.Group?.name === "Admin";
-  const roles = userWithRole?.Group?.Roles?.map((r) => r) || [];
+
+  const roles =
+    userWithRole?.Group?.roles?.map((r) => ({
+      id: r.id,
+      url: r.url,
+    })) || [];
+
+  const isAdmin =
+    userWithRole?.Group?.name?.toLowerCase() === "admin" ||
+    userWithRole?.email === "admin@gmail.com";
+
   const userData = {
-    id: userWithRole?.id,
-    email: userWithRole?.email || "",
-    username: userWithRole?.username || "",
-    groupname: userWithRole?.Group?.name || "",
-    avatarUrl: userWithRole?.avatarUrl || "",
-  };
-  const payload = {
-    email: userWithRole.email,
     id: userWithRole.id,
+    email: userWithRole.email,
     username: userWithRole.username,
+    groupname: userWithRole?.Group?.name,
     avatarUrl: userWithRole.avatarUrl,
-    roles,
-    isAdmin,
   };
-  return { userData, payload };
+
+  return {
+    userData,
+    payload: {
+      ...userData,
+      roles,
+      isAdmin,
+    },
+  };
 };
 
 const issueAccessToken = (payload) => {
-  return jwt.sign(payload, process.env.jwtKey, { expiresIn: "15m" });
+  return jwt.sign(payload, process.env.jwtKey, { expiresIn: "1m" });
 };
 const RefreshByUserId = async (userId) => {
   try {

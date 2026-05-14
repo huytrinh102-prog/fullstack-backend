@@ -129,7 +129,6 @@ const handleLogout = async (req, res) => {
 const handleLoginGoogle = async (req, res) => {
   try {
     let { token } = req.body;
-    console.log("checktoken gg ", token);
     let data = await LoginRegisterService.googleLogin(token);
     if (data && +data.EC === 0) {
       setRefreshCookie(res, data?.DT?.user);

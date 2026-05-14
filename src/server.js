@@ -26,11 +26,11 @@ const parseOrigins = (value) =>
     .filter(Boolean);
 
 const staticAllowedOrigins = new Set([
+  "http://localhost:3000",
   "http://localhost:3001",
   "https://fullstack-frontend-77iy.vercel.app",
   ...parseOrigins(process.env.CORS_ORIGINS),
 ]);
-
 const allowVercelWildcard =
   String(process.env.ALLOW_VERCEL_WILDCARD || "").toLowerCase() === "true";
 const vercelAppRegex = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;

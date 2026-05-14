@@ -34,6 +34,7 @@ const getRolesByGroupId = async (groupId) => {
       where: { id: groupId },
       include: {
         model: db.Role,
+        as: "roles",
         attributes: ["id", "url", "description"],
       },
     });
