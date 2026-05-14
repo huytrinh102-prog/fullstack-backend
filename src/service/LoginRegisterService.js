@@ -19,10 +19,8 @@ const buildUserWithRoles = async (userId) => {
       },
     },
   });
-
   const isAdmin = userWithRole?.Group?.name === "Admin";
   const roles = userWithRole?.Group?.Roles?.map((r) => r) || [];
-
   const userData = {
     id: userWithRole?.id,
     email: userWithRole?.email || "",
@@ -30,7 +28,6 @@ const buildUserWithRoles = async (userId) => {
     groupname: userWithRole?.Group?.name || "",
     avatarUrl: userWithRole?.avatarUrl || "",
   };
-
   const payload = {
     email: userWithRole.email,
     id: userWithRole.id,
@@ -39,12 +36,25 @@ const buildUserWithRoles = async (userId) => {
     roles,
     isAdmin,
   };
-
   return { userData, payload };
 };
 
 const issueAccessToken = (payload) => {
   return jwt.sign(payload, process.env.jwtKey, { expiresIn: "15m" });
+};
+const RefreshByUserId = async (userId) => {
+  try {
+    const { userData, payload } = await buildUserWithRoles(userId);
+    const access_token = issueAccessToken(payload);
+    return {
+      EC: 0,
+      EM: "Refresh success",
+      DT: { access_token: access_token, user: userData },
+    };
+  } catch (error) {
+    console.log(error);
+    return { EC: 1, EM: "Refresh failed", DT: "" };
+  }
 };
 
 const Register = async (rawData, req, res) => {
@@ -107,7 +117,7 @@ const Login = async (data) => {
 
     if (!checkPassword) {
       return {
-        EM: "WRONG PASSWORD",
+        EM: "WRONG EMAIL or PASSWORD",
         EC: 1,
         DT: "",
       };
@@ -145,7 +155,7 @@ const googleLogin = async (token) => {
       `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`,
     );
 
-    const { email, name, picture } = res.data;
+    const { email, name } = res.data;
     let user = await db.User.findOne({ where: { email } });
 
     if (!user) {
@@ -168,20 +178,6 @@ const googleLogin = async (token) => {
       EC: 1,
       EM: "Google login failed",
     };
-  }
-};
-const RefreshByUserId = async (userId) => {
-  try {
-    const { userData, payload } = await buildUserWithRoles(userId);
-    const access_token = issueAccessToken(payload);
-    return {
-      EC: 0,
-      EM: "Refresh success",
-      DT: { access_token: access_token, user: userData },
-    };
-  } catch (error) {
-    console.log(error);
-    return { EC: 1, EM: "Refresh failed", DT: "" };
   }
 };
 

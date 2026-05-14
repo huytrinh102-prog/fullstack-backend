@@ -27,6 +27,30 @@ const setRefreshCookie = (res, user) => {
 const clearRefreshCookie = (res) => {
   res.clearCookie("refresh_token", refreshCookieOptions());
 };
+const handleRefreshToken = async (req, res) => {
+  try {
+    const refreshToken = req.cookies?.refresh_token;
+    if (!refreshToken) {
+      return res.status(401).json({ EC: 1, EM: "No refresh token", DT: "" });
+    }
+    if (!process.env.jwtRefreshKey) {
+      return res
+        .status(500)
+        .json({ EC: 1, EM: "Missing jwtRefreshKey", DT: "" });
+    }
+
+    const decoded = jwt.verify(refreshToken, process.env.jwtRefreshKey);
+    const data = await loginRegisterService.RefreshByUserId(decoded?.id);
+    return res.status(200).json({
+      EM: data.EM,
+      EC: data.EC,
+      DT: data.DT,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(401).json({ EC: 1, EM: "Invalid refresh token", DT: "" });
+  }
+};
 
 const testApi = (req, res) => {
   return res.status(200).json({
@@ -100,31 +124,6 @@ const handleLogout = async (req, res) => {
     EC: 0,
     DT: "",
   });
-};
-
-const handleRefreshToken = async (req, res) => {
-  try {
-    const refreshToken = req.cookies?.refresh_token;
-    if (!refreshToken) {
-      return res.status(401).json({ EC: 1, EM: "No refresh token", DT: "" });
-    }
-    if (!process.env.jwtRefreshKey) {
-      return res
-        .status(500)
-        .json({ EC: 1, EM: "Missing jwtRefreshKey", DT: "" });
-    }
-
-    const decoded = jwt.verify(refreshToken, process.env.jwtRefreshKey);
-    const data = await loginRegisterService.RefreshByUserId(decoded.id);
-    return res.status(200).json({
-      EM: data.EM,
-      EC: data.EC,
-      DT: data.DT,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(401).json({ EC: 1, EM: "Invalid refresh token", DT: "" });
-  }
 };
 
 const handleLoginGoogle = async (req, res) => {
