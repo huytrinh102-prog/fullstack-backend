@@ -18,7 +18,6 @@ const buildUserWithRoles = async (userId) => {
       },
     },
   });
-
   const roles =
     userWithRole?.Group?.roles?.map((r) => ({
       id: r.id,

@@ -58,14 +58,9 @@ const read = async (page, limit, search, sort) => {
       include: [
         {
           model: db.Group,
+          as: "groups",
           attributes: ["name", "description"],
-          include: [
-            {
-              model: db.Role,
-              as: "roles",
-              attributes: ["id", "url", "description"],
-            },
-          ],
+          through: { attributes: [] },
         },
       ],
     });

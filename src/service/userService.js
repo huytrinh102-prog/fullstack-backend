@@ -25,7 +25,6 @@ const getListUsers = async () => {
     where: { id: 1 },
     include: {
       model: db.Group,
-      as: "groups",
     },
     raw: true,
     nest: true,
