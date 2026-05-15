@@ -47,7 +47,7 @@ const buildUserWithRoles = async (userId) => {
 };
 
 const issueAccessToken = (payload) => {
-  return jwt.sign(payload, process.env.jwtKey, { expiresIn: "1m" });
+  return jwt.sign(payload, process.env.jwtKey, { expiresIn: "15m" });
 };
 const RefreshByUserId = async (userId) => {
   try {
