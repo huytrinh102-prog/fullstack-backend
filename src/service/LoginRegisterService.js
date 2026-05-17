@@ -13,7 +13,7 @@ const buildUserWithRoles = async (userId) => {
       attributes: ["id", "name", "description"],
       include: {
         model: db.Role,
-        as: "roles", // 🔥 CHUẨN
+        as: "roles", //
         attributes: ["id", "url", "description"],
       },
     },
