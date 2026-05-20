@@ -16,9 +16,11 @@
     "dialect": "mysql"
   },
   "production": {
-    "use_env_variable": "DATABASE_URL",
-    "dialect": "mysql",
-    "logging": false,
-    "define": { "freezeTableName": true }
+    "username": "root",
+    "password": "MajhPUmxIOBmLFeRqJZrLnBHVOxTmJpa",
+    "database": "railway",
+    "host": "trolley.proxy.rlwy.net",
+    "port": 58112,
+    "dialect": "mysql"
   }
 }

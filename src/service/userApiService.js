@@ -1,7 +1,7 @@
 import db from "../models/index.cjs";
 import bcrypt from "bcrypt";
 const saltRounds = 10;
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import cloudinary from "../config/cloudinary.js";
 const read = async (page, limit, search, sort) => {
   try {
@@ -18,11 +18,24 @@ const read = async (page, limit, search, sort) => {
         })),
       };
     }
-    // order
+    // order (avoid invalid fields causing Sequelize to generate unexpected joins)
+    const allowedSortFields = new Set([
+      "id",
+      "username",
+      "email",
+      "phone",
+      "sex",
+      "createdAt",
+      "updatedAt",
+    ]);
     let order = [["id", "DESC"]];
     if (sort) {
-      const [field, direction] = sort.split(",");
-      order = [[field, direction.toUpperCase()]];
+      const [rawField, rawDirection] = String(sort).split(",");
+      const field = String(rawField || "").trim();
+      const direction = String(rawDirection || "").trim().toUpperCase();
+      if (allowedSortFields.has(field) && (direction === "ASC" || direction === "DESC")) {
+        order = [[field, direction]];
+      }
     }
 
     const offset = (page - 1) * limit;
@@ -41,8 +54,8 @@ const read = async (page, limit, search, sort) => {
       ],
       include: [
         {
-          model: db.Group,
-          attributes: ["name", "description"],
+          association: db.User.associations.Group,
+          attributes: ["id", "name", "description"],
         },
       ],
       order: order,
@@ -137,15 +150,17 @@ const create = async (data) => {
 };
 const remove = async (id) => {
   try {
-    const removeUser = await db.User.destroy({
-      where: {
-        id: id,
-      },
-    });
-    if (removeUser > 0) {
-      if (removeUser.avatarPublicId) {
-        await await cloudinary.uploader.destroy(removeUser.avatarPublicId);
+    const user = await db.User.findOne({ where: { id: id } });
+
+    if (user) {
+      if (user.avatarPublicId) {
+        await cloudinary.uploader.destroy(user.avatarPublicId);
       }
+      await db.User.destroy({
+        where: {
+          id: id,
+        },
+      });
       return {
         EM: "Delete the user success",
         EC: 0,
@@ -154,7 +169,7 @@ const remove = async (id) => {
     }
     {
       return {
-        EM: "Something wrongs from server...",
+        EM: "User not found",
         EC: 1,
       };
     }

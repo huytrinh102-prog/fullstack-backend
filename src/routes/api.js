@@ -4,6 +4,7 @@ import userController from "../controller/userController.js";
 import { checkPermission, checkToken } from "../middleware/jwt-action.js";
 import rolesController from "../controller/rolesController.js";
 import GroupRoleController from "../controller/GroupRoleController.js";
+import projectController from "../controller/ProjectController.js";
 const router = express.Router();
 /**
  * @param {*} app :express appß
@@ -19,6 +20,12 @@ const initApiRoutes = (app) => {
   router.use(checkToken);
   router.get("/account", userController.getAccountData);
   router.post("/cloudinary/sign-avatar", userController.userAvatar);
+  // project
+  router.post("/project", projectController.createProject);
+  router.get("/project", projectController.getProject);
+  router.get("/project/:id", projectController.getProjectbyuserId);
+  router.delete("/project/:id", projectController.deleteProject);
+  router.put("/project/:id", projectController.updateProject);
   // PERMISSION
   router.use(checkPermission);
   // roles
@@ -27,7 +34,7 @@ const initApiRoutes = (app) => {
   router.delete("/role-delete/:id", rolesController.deleteRole);
   router.put("/role-update/:id", rolesController.updateRole);
 
-  // crud
+  // crud user
   router.get("/read", userController.getUsers);
   router.post("/create", userController.creatUser);
   router.delete("/delete/:id", userController.deleteUser);

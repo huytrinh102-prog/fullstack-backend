@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
       // many-to-many  User
       Project.belongsToMany(models.User, {
         through: models.ProjectUser,
+        as: "users",
         foreignKey: "projectId",
         otherKey: "userId",
       });
@@ -25,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       description: DataTypes.TEXT,
 
       status: {
-        type: DataTypes.STRING,
+        type: DataTypes.ENUM("PENDING", "ACTIVE", "COMPLETED", "CANCELLED"),
         defaultValue: "PENDING",
       },
 
