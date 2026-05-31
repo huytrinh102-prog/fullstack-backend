@@ -27,6 +27,7 @@ const staticAllowedOrigins = new Set([
   "http://localhost:3000",
   "http://localhost:3001",
   "https://fullstack-frontend-77iy.vercel.app",
+  "https://fullstack-frontend-lyart.vercel.app",
   ...parseOrigins(process.env.CORS_ORIGINS),
 ]);
 const allowVercelWildcard =
