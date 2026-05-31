@@ -60,15 +60,26 @@ app.use((req, res) => {
   return res.status(404).send("not found 404");
 });
 
-const PORT = Number(process.env.PORT) || 8080;
-const HOST = process.env.HOST || "::";
-const server = app.listen({ port: PORT, host: HOST, ipv6Only: false }, () => {
-  console.log(`backend listening on http://localhost:${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await connection();
 
-// check connection
-connection();
-server.on("error", (err) => {
-  console.error("Failed to start server:", err);
-  process.exitCode = 1;
-});
+    const PORT = Number(process.env.PORT) || 8080;
+    const HOST = process.env.HOST || "::";
+    const server = app.listen(
+      { port: PORT, host: HOST, ipv6Only: false },
+      () => {
+        console.log(`backend listening on http://localhost:${PORT}`);
+      },
+    );
+
+    server.on("error", (err) => {
+      console.error("Failed to start server:", err);
+      process.exitCode = 1;
+    });
+  } catch {
+    process.exitCode = 1;
+  }
+};
+
+startServer();

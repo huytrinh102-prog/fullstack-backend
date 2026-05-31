@@ -29,8 +29,10 @@ const connection = async () => {
     const [[d]] = await sequelize.query("SELECT DATABASE() AS db");
     console.log("DB_IN_USE:", d);
     console.log("Connection has been established successfully.");
+    return sequelize;
   } catch (error) {
     console.error("Unable to connect to the database:", error);
+    throw error;
   }
 };
 
