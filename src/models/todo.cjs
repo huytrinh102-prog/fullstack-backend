@@ -20,15 +20,12 @@ module.exports = (sequelize, DataTypes) => {
       description: DataTypes.TEXT,
       status: DataTypes.STRING,
       priority: DataTypes.STRING,
-      dueDate: DataTypes.DATE,
-      imageUrl: DataTypes.STRING,
-      imagePublicId: DataTypes.STRING,
-      userId: DataTypes.INTEGER,
       projectId: DataTypes.INTEGER,
     },
     {
       sequelize,
       modelName: "Todo",
+      tableName: "Todos",
     },
   );
   return Todo;

@@ -34,7 +34,7 @@ const updateUser = async (req, res) => {
     }
     if (req.body.phone.length < 8) {
       return res.status(200).json({
-        EM: "Your password must have more than 8 letters",
+        EM: "Your phone number must have at least 8 digits",
         EC: 1,
         DT: "",
       });
@@ -60,16 +60,15 @@ const creatUser = async (req, res) => {
         DT: "",
       });
     }
-    if (req.body.phone.length < 8) {
+    if (String(req.body.password || "").length < 8) {
       return res.status(200).json({
-        EM: "Your password must have more than 8 letters",
+        EM: "Your password must have at least 8 characters",
         EC: 1,
         DT: "",
       });
     }
     console.log("UPDATE DATA:", req.body);
     const data = await userApiService.create(req.body);
-    await userApiService.create(data);
     return res.status(200).json({
       EM: data.EM,
       EC: data.EC,

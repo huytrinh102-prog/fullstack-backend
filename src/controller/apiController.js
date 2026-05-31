@@ -1,4 +1,3 @@
-import LoginRegisterService from "../service/LoginRegisterService.js";
 import loginRegisterService from "../service/LoginRegisterService.js";
 import jwt from "jsonwebtoken";
 
@@ -67,9 +66,9 @@ const handleRegister = async (req, res) => {
         DT: "",
       });
     }
-    if (req.body.phone.length < 8) {
+    if (String(req.body.password || "").length < 8) {
       return res.status(200).json({
-        EM: "Your password must have more than 8 letters",
+        EM: "Your password must have at least 8 characters",
         EC: 1,
         DT: "",
       });
@@ -129,7 +128,7 @@ const handleLogout = async (req, res) => {
 const handleLoginGoogle = async (req, res) => {
   try {
     let { token } = req.body;
-    let data = await LoginRegisterService.googleLogin(token);
+    let data = await loginRegisterService.googleLogin(token);
     if (data && +data.EC === 0) {
       setRefreshCookie(res, data?.DT?.user);
     }

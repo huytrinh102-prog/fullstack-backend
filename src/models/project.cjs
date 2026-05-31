@@ -37,6 +37,7 @@ module.exports = (sequelize, DataTypes) => {
       avatarUrl: DataTypes.STRING,
 
       avatarPublicId: DataTypes.STRING,
+      createdBy: DataTypes.STRING,
     },
     {
       sequelize,

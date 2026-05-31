@@ -2,7 +2,8 @@ import projectService from "../service/projectService.js";
 import { Op, Sequelize } from "sequelize";
 const createProject = async (req, res) => {
   try {
-    let data = await projectService.create(req.body);
+    const id = req?.user?.id;
+    let data = await projectService.create(req?.body, id);
     return res.status(200).json({
       EM: data.EM,
       EC: data.EC,
@@ -20,7 +21,9 @@ const createProject = async (req, res) => {
 
 const getProject = async (req, res) => {
   try {
-    let data = await projectService.read();
+    const { search, filter } = req.query;
+    const id = req.user?.id;
+    let data = await projectService.read(search, filter, id);
     return res.status(200).json({
       EM: data.EM,
       EC: data.EC,
@@ -35,10 +38,11 @@ const getProject = async (req, res) => {
     });
   }
 };
-const getProjectbyuserId = async (req, res) => {
+
+const getProjectbyId = async (req, res) => {
   try {
-    const id = req.params.id;
-    let data = await projectService.readProjectByuserId(id);
+    const projectId = req?.params.id;
+    let data = await projectService.readProjectById(projectId);
     return res.status(200).json({
       EM: data.EM,
       EC: data.EC,
@@ -74,7 +78,7 @@ const deleteProject = async (req, res) => {
 const updateProject = async (req, res) => {
   try {
     const id = req.params.id;
-    let data = await projectService.update(id);
+    let data = await projectService.update(req.body, id);
     return res.status(200).json({
       EM: data.EM,
       EC: data.EC,
@@ -92,7 +96,7 @@ const updateProject = async (req, res) => {
 export default {
   createProject,
   getProject,
-  getProjectbyuserId,
   deleteProject,
   updateProject,
+  getProjectbyId,
 };

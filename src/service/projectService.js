@@ -2,14 +2,8 @@ import db from "../models/index.cjs";
 import cloudinary from "../config/cloudinary.js";
 import { Op, Sequelize } from "sequelize";
 
-const create = async (data) => {
-  if (
-    !data ||
-    !data?.username ||
-    !data.name ||
-    !data.startDate ||
-    !data.endDate
-  ) {
+const create = async (data, userId) => {
+  if (!data || !data.name || !data.startDate || !data.endDate) {
     return {
       EM: "Missing required parameters",
       EC: 1,
@@ -23,15 +17,20 @@ const create = async (data) => {
       DT: "",
     };
   }
-  const {
-    name,
-    description,
-    startDate,
-    endDate,
-    avatarUrl,
-    avatarPublicId,
-    username,
-  } = data;
+
+  const { name, description, startDate, endDate, avatarUrl, avatarPublicId } =
+    data; // status
+  const now = new Date();
+
+  let status = "";
+
+  if (new Date(startDate) > now) {
+    status = "PENDING";
+  } else if (new Date(endDate) < now) {
+    status = "COMPLETED";
+  } else {
+    status = "ACTIVE";
+  }
   const DEFAULT_AVATAR =
     "https://media.licdn.com/dms/image/v2/C4E12AQEDHtUmDLS3yQ/article-cover_image-shrink_600_2000/article-cover_image-shrink_600_2000/0/1520046874939?e=2147483647&v=beta&t=9r5LerPDALfUQW36HYezN-aRfmXdJsWrtjJ-j-VDZAs";
   try {
@@ -42,8 +41,8 @@ const create = async (data) => {
       endDate: endDate,
       avatarUrl: avatarUrl || DEFAULT_AVATAR,
       avatarPublicId: avatarPublicId || "",
-      status: "PENDING",
-      createdBy: username,
+      status: status,
+      createdBy: userId || "",
     });
     if (!res) {
       return {
@@ -66,50 +65,67 @@ const create = async (data) => {
     };
   }
 };
-const read = async (search, sort) => {
-  // /condition
-  let whereCondition = {};
-  if (search) {
-    const keyword = search.trim().split(" ").filter(Boolean);
-    whereCondition = {
-      [Op.and]: keyword.map((word) => ({
-        [Op.or]: [
-          { name: { [Op.like]: `%${word}%` } },
-          { description: { [Op.like]: `%${word}%` } },
-        ],
-      })),
-    };
-  }
-  // order
-  let order = [["id", "DESC"]];
-  if (sort) {
-    const [field, direction] = sort.split(",");
-    order = [[field, direction.toUpperCase()]];
-  }
-  let data = await db.Project.findAll({
-    where: whereCondition,
-    attributes: [
-      "id",
-      "name",
-      "description",
-      "startDate",
-      "endDate",
-      "avatarUrl",
-      "avatarPublicId",
-      [Sequelize.fn("COUNT", Sequelize.col("users.id")), "memberCount"],
-    ],
-    include: [
-      {
-        model: db.User,
-        as: "users",
-        attributes: ["username", "email"],
-      },
-    ],
-    group: ["Project.id"],
-    order: order,
-  });
-
+const read = async (search, filter, userId) => {
   try {
+    let whereCondition = {};
+
+    // ================= SEARCH =================
+    if (search) {
+      const keyword = search.trim().split(" ").filter(Boolean);
+
+      whereCondition = {
+        [Op.and]: keyword.map((word) => ({
+          [Op.or]: [
+            { name: { [Op.like]: `%${word}%` } },
+            { description: { [Op.like]: `%${word}%` } },
+          ],
+        })),
+      };
+    }
+    // ================= FILTER STATUS =================
+    if (filter) {
+      const f = filter.toUpperCase();
+
+      if (f === "ACTIVE") {
+        whereCondition.status = "ACTIVE";
+      }
+
+      if (f === "COMPLETED") {
+        whereCondition.status = "COMPLETED";
+      }
+
+      if (f === "PENDING") {
+        whereCondition.status = "PENDING";
+      }
+
+      if (f === "MINE") {
+        whereCondition.createdBy = userId;
+      }
+    }
+    const data = await db.Project.findAll({
+      where: whereCondition,
+
+      attributes: [
+        "id",
+        "name",
+        "description",
+        "startDate",
+        "endDate",
+        "avatarUrl",
+        "avatarPublicId",
+        "status",
+        "createdBy",
+        [
+          Sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM ProjectUser AS up
+            WHERE up.projectId = Project.id
+          )`),
+          "memberCount",
+        ],
+      ],
+    });
+
     return {
       EM: "Get the project success",
       EC: 0,
@@ -124,40 +140,59 @@ const read = async (search, sort) => {
     };
   }
 };
-const readProjectByuserId = async (userId) => {
-  if (!userId) {
-    return { EM: "Missung userId", EC: 1, DT: "" };
+const readProjectById = async (projectId) => {
+  if (!projectId) {
+    return {
+      EM: "Missing projectId",
+      EC: 1,
+      DT: "",
+    };
   }
+
   try {
-    const user = await db.User.findOne({
-      where: { id: userId },
-      include: {
-        model: db.Project,
-        as: "projects",
-        attributes: [
-          "id",
-          "name",
-          "description",
-          "startDate",
-          "endDate",
-          "avatarUrl",
-        ],
+    const project = await db.Project.findOne({
+      where: {
+        id: projectId,
       },
+
+      attributes: [
+        "id",
+        "name",
+        "description",
+        "startDate",
+        "endDate",
+        "avatarUrl",
+        "status",
+        "createdBy",
+      ],
+      include: [
+        {
+          model: db.User,
+          as: "users",
+          attributes: ["id", "username", "email"],
+          through: {
+            attributes: [],
+          },
+        },
+      ],
     });
-    if (!user) {
+
+    if (!project) {
       return {
-        EM: "User not found",
+        EM: "Project not found",
         EC: 1,
         DT: "",
       };
     }
+
     return {
-      EM: "Get the projects success",
+      EM: "Get project success",
       EC: 0,
-      DT: user,
+      DT: project,
     };
   } catch (error) {
     console.log(error);
+
     return {
       EM: "Error from server...",
       EC: 1,
@@ -180,7 +215,7 @@ const remove = async (projectId) => {
         DT: "",
       };
     }
-    if (project.avatarPublicId) {
+    if (project.avatarPublicId && typeof project.avatarPublicId === "string") {
       await cloudinary.uploader.destroy(project.avatarPublicId);
     }
     await db.Project.destroy({
@@ -247,4 +282,4 @@ const update = async (data, projectId) => {
     };
   }
 };
-export default { create, remove, update, read, readProjectByuserId };
+export default { create, remove, update, read, readProjectById };

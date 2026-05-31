@@ -5,6 +5,9 @@ import { checkPermission, checkToken } from "../middleware/jwt-action.js";
 import rolesController from "../controller/rolesController.js";
 import GroupRoleController from "../controller/GroupRoleController.js";
 import projectController from "../controller/ProjectController.js";
+import todoController from "../controller/todoController.js";
+import projectMembersController from "../controller/projectMembersController.js";
+import dashboardController from "../controller/dashboardController.js";
 const router = express.Router();
 /**
  * @param {*} app :express appß
@@ -20,14 +23,37 @@ const initApiRoutes = (app) => {
   router.use(checkToken);
   router.get("/account", userController.getAccountData);
   router.post("/cloudinary/sign-avatar", userController.userAvatar);
+
+  // PERMISSION
+  router.use(checkPermission);
   // project
   router.post("/project", projectController.createProject);
   router.get("/project", projectController.getProject);
-  router.get("/project/:id", projectController.getProjectbyuserId);
+  router.get("/project/:id", projectController.getProjectbyId);
   router.delete("/project/:id", projectController.deleteProject);
   router.put("/project/:id", projectController.updateProject);
-  // PERMISSION
-  router.use(checkPermission);
+  // dashboard
+  router.get("/dashboard", dashboardController.getDashboard);
+  // project member
+  router.post(
+    "/project/:projectId/members",
+    projectMembersController.addMembers,
+  );
+  router.get(
+    "/project/:projectId/members",
+    projectMembersController.getMembers,
+  );
+  router.delete(
+    "/project/:projectId/members/:userId",
+    projectMembersController.deleteMembers,
+  );
+
+  // todos
+  router.post("/todos", todoController.createTodos);
+  router.get("/todos/user/:id", todoController.getTodosbyuserId);
+  router.get("/todos/project/:projectId", todoController.getTodos);
+  router.delete("/todos/:id", todoController.deleteTodo);
+  router.put("/todos/:id", todoController.updateTodo);
   // roles
   router.post("/role-create", rolesController.createRoles);
   router.get("/role-read", rolesController.getRoles);

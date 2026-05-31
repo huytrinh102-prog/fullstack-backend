@@ -1,13 +1,11 @@
+import "dotenv/config";
 import express from "express";
 import configViewEngine from "./config/viewEngine.js";
 import initWebRoutes from "./routes/web.js";
-import dotenv from "dotenv";
 import connection from "./config/connect.js";
 import cors from "cors";
 import initApiRoutes from "./routes/api.js";
 import cookieParser from "cookie-parser";
-
-dotenv.config();
 const app = express(); // req.body undifile
 app.use(express.urlencoded({ extended: true })); // form submit (x-www-form-urlencoded)
 app.use(express.json());

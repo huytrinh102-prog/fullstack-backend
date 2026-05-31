@@ -32,17 +32,19 @@ const read = async (page, limit, search, sort) => {
     if (sort) {
       const [rawField, rawDirection] = String(sort).split(",");
       const field = String(rawField || "").trim();
-      const direction = String(rawDirection || "").trim().toUpperCase();
-      if (allowedSortFields.has(field) && (direction === "ASC" || direction === "DESC")) {
+      const direction = String(rawDirection || "")
+        .trim()
+        .toUpperCase();
+      if (
+        allowedSortFields.has(field) &&
+        (direction === "ASC" || direction === "DESC")
+      ) {
         order = [[field, direction]];
       }
     }
-
-    const offset = (page - 1) * limit;
-    let data = await db.User.findAndCountAll({
+    const options = {
       where: whereCondition,
-      limit: +limit,
-      offset: +offset,
+      order,
       attributes: [
         "id",
         "username",
@@ -58,8 +60,21 @@ const read = async (page, limit, search, sort) => {
           attributes: ["id", "name", "description"],
         },
       ],
-      order: order,
-    });
+    };
+    const safeLimit = Number(limit);
+    const safePage = Number(page);
+
+    const hasPagination =
+      Number.isInteger(safeLimit) &&
+      safeLimit > 0 &&
+      Number.isInteger(safePage) &&
+      safePage > 0;
+
+    if (hasPagination) {
+      options.limit = safeLimit;
+      options.offset = (safePage - 1) * safeLimit;
+    }
+    let data = await db.User.findAndCountAll(options);
     if (data) {
       return {
         EM: "get users succcess",
@@ -67,8 +82,10 @@ const read = async (page, limit, search, sort) => {
         DT: {
           users: data.rows,
           totalUsers: data.count,
-          totalPages: Math.ceil(data.count / limit),
-          currentPage: +page,
+          totalPages: Number.isFinite(safeLimit)
+            ? Math.ceil(data.count / safeLimit)
+            : 1,
+          currentPage: Number.isFinite(safePage) ? safePage : 1,
         },
       };
     }
@@ -164,7 +181,7 @@ const remove = async (id) => {
       return {
         EM: "Delete the user success",
         EC: 0,
-        DT: removeUser,
+        DT: { id: user.id },
       };
     }
     {
