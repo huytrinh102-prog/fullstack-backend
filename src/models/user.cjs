@@ -10,11 +10,33 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       User.belongsTo(models.Group, { foreignKey: "groupId" });
-      User.belongsToMany(models.Project, {
-        through: models.ProjectUser,
-        as: "projects",
+      User.hasMany(models.UserLanguage, {
+        as: "languages",
         foreignKey: "userId",
-        otherKey: "projectId",
+      });
+      User.hasMany(models.Video, {
+        as: "createdVideos",
+        foreignKey: "createdByUserId",
+      });
+      User.hasMany(models.VideoProgress, {
+        as: "videoProgress",
+        foreignKey: "userId",
+      });
+      User.hasMany(models.Note, {
+        as: "notes",
+        foreignKey: "userId",
+      });
+      User.hasMany(models.VocabularyItem, {
+        as: "vocabularyItems",
+        foreignKey: "userId",
+      });
+      User.hasMany(models.Playlist, {
+        as: "playlists",
+        foreignKey: "userId",
+      });
+      User.hasMany(models.PasswordResetToken, {
+        as: "passwordResetTokens",
+        foreignKey: "userId",
       });
     }
   }

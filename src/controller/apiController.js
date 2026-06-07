@@ -12,6 +12,11 @@ const refreshCookieOptions = () => {
   };
 };
 
+const clearRefreshCookieOptions = () => {
+  const { maxAge, ...options } = refreshCookieOptions();
+  return options;
+};
+
 const setRefreshCookie = (res, user) => {
   if (!process.env.jwtRefreshKey) return;
   if (!user?.id) return;
@@ -24,7 +29,7 @@ const setRefreshCookie = (res, user) => {
 };
 
 const clearRefreshCookie = (res) => {
-  res.clearCookie("refresh_token", refreshCookieOptions());
+  res.clearCookie("refresh_token", clearRefreshCookieOptions());
 };
 const handleRefreshToken = async (req, res) => {
   try {
@@ -94,14 +99,6 @@ const handleLogin = async (req, res) => {
     if (data && +data.EC === 0) {
       setRefreshCookie(res, data?.DT?.user);
     }
-    // if (data && data.EC === 0) {
-    //   res.cookie("token", data.DT.access_token, {
-    //     httpOnly: true,
-    //     secure: true,
-    //     sameSite: "None",
-    //     path: "/",
-    //     maxAge: 24 * 60 * 60 * 1000,
-    //   });
     return res.status(200).json({
       EM: data.EM,
       EC: data.EC,
@@ -147,6 +144,28 @@ const handleLoginGoogle = async (req, res) => {
   }
 };
 
+// reset password
+const handleForgotPassword = async (req, res) => {
+  const data = await loginRegisterService.forgotPassword(req.body.email);
+  return res.status(200).json({
+    EM: data.EM,
+    EC: data.EC,
+    DT: data.DT,
+  });
+};
+
+const handleResetPassword = async (req, res) => {
+  const data = await loginRegisterService.resetPassword(
+    req.body.token,
+    req.body.newPassword,
+  );
+
+  return res.status(200).json({
+    EM: data.EM,
+    EC: data.EC,
+    DT: data.DT,
+  });
+};
 export default {
   testApi,
   handleRegister,
@@ -154,4 +173,6 @@ export default {
   handleLogout,
   handleRefreshToken,
   handleLoginGoogle,
+  handleForgotPassword,
+  handleResetPassword,
 };

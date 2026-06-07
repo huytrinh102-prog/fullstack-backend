@@ -4,6 +4,82 @@ import { Op } from "sequelize";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
+import crypto from "crypto";
+import emailService from "./emailService.js";
+//reset password
+const hashResetToken = (token) => {
+  return crypto.createHash("sha256").update(token).digest("hex");
+};
+const forgotPassword = async (email) => {
+  const user = await db.User.findOne({ where: { email } });
+  if (!user) {
+    return {
+      EM: "If this email exists, a reset link has been sent",
+      EC: 0,
+      DT: "",
+    };
+  }
+  const token = crypto.randomBytes(32).toString("hex");
+  const tokenHash = hashResetToken(token);
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+  await db.PasswordResetToken.create({
+    userId: user.id,
+    tokenHash,
+    expiresAt,
+  });
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+  await emailService.sendResetPasswordEmail(user.email, resetLink);
+  return {
+    EM: "If this email exists, a reset link has been sent",
+    EC: 0,
+    DT: "",
+  };
+};
+const resetPassword = async (token, newPassword) => {
+  if (!token) {
+    return {
+      EM: "Missing reset token",
+      EC: 1,
+      DT: "",
+    };
+  }
+
+  if (!newPassword) {
+    return {
+      EM: "Password is required",
+      EC: 1,
+      DT: "",
+    };
+  }
+  if (String(newPassword).length < 8) {
+    return {
+      EM: "Your password must have at least 8 characters",
+      EC: 1,
+      DT: "",
+    };
+  }
+  const tokenHash = hashResetToken(token);
+  const resteToken = await db.PasswordResetToken.findOne({
+    where: {
+      tokenHash,
+      usedAt: null,
+      expiresAt: {
+        [Op.gt]: new Date(),
+      },
+    },
+    include: {
+      model: db.User,
+      as: "user",
+    },
+  });
+  if (!resteToken?.user) {
+    return { EM: "Reset link is invalid or expired", EC: 1, DT: "" };
+  }
+  const hashPassword = await bcrypt.hash(newPassword, 10);
+  await resteToken.user.update({ password: hashPassword });
+  await resteToken.update({ usedAt: new Date() });
+  return { EM: "Reset password success", EC: 0, DT: "" };
+};
 const buildUserWithRoles = async (userId) => {
   const userWithRole = await db.User.findOne({
     where: { id: userId },
@@ -93,7 +169,7 @@ const Register = async (rawData, req, res) => {
       password: hashPassword,
       username: username,
       phone: phone,
-      groupId: 4,
+      groupId: 2,
     });
     return { EM: "register success", EC: 0 };
   } catch (error) {
@@ -108,7 +184,11 @@ const Login = async (data) => {
   try {
     const user = await db.User.findOne({
       where: {
-        [Op.or]: [{ email: data.input }, { phone: data.input }],
+        [Op.or]: [
+          { email: data.input },
+          { phone: data.input },
+          { username: data.input },
+        ],
       },
     });
 
@@ -169,7 +249,7 @@ const googleLogin = async (token) => {
       user = await db.User.create({
         email,
         username: name,
-        groupId: 4,
+        groupId: 2,
       });
     }
     const { userData, payload } = await buildUserWithRoles(user.id);
@@ -188,4 +268,11 @@ const googleLogin = async (token) => {
   }
 };
 
-export default { Register, Login, googleLogin, RefreshByUserId };
+export default {
+  forgotPassword,
+  resetPassword,
+  Register,
+  Login,
+  googleLogin,
+  RefreshByUserId,
+};

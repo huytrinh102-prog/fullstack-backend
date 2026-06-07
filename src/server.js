@@ -25,6 +25,9 @@ const parseOrigins = (value) =>
 
 const staticAllowedOrigins = new Set([
   "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5176",
   "http://localhost:3001",
   "https://fullstack-frontend-77iy.vercel.app",
   "https://fullstack-frontend-lyart.vercel.app",
@@ -33,6 +36,8 @@ const staticAllowedOrigins = new Set([
 const allowVercelWildcard =
   String(process.env.ALLOW_VERCEL_WILDCARD || "").toLowerCase() === "true";
 const vercelAppRegex = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;
+const localDevRegex =
+  /^http:\/\/(?:localhost|127\.0\.0\.1):(?:3000|3001|5173|5174|5175|5176|5177|5178|5179)$/;
 
 const corsOptions = {
   origin(origin, callback) {
@@ -40,6 +45,7 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     if (staticAllowedOrigins.has(origin)) return callback(null, true);
+    if (localDevRegex.test(origin)) return callback(null, true);
     if (allowVercelWildcard && vercelAppRegex.test(origin))
       return callback(null, true);
 

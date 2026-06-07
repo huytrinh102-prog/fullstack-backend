@@ -1,35 +1,12 @@
-import { Sequelize } from "sequelize";
+import db from "../models/index.cjs";
 
-const buildSequelize = () => {
-  const databaseUrl = process.env.DATABASE_URL || process.env.MYSQL_URL;
-  if (databaseUrl) {
-    return new Sequelize(databaseUrl, {
-      dialect: "mysql",
-      logging: false,
-    });
-  }
-
-  return new Sequelize(
-    process.env.MYSQLDATABASE,
-    process.env.MYSQLUSER,
-    process.env.MYSQLPASSWORD,
-    {
-      host: process.env.MYSQLHOST,
-      port: Number(process.env.MYSQLPORT || 3306),
-      dialect: "mysql",
-      logging: false,
-    },
-  );
-};
-
-const sequelize = buildSequelize();
 const connection = async () => {
   try {
-    await sequelize.authenticate();
-    const [[d]] = await sequelize.query("SELECT DATABASE() AS db");
+    await db.sequelize.authenticate();
+    const [[d]] = await db.sequelize.query("SELECT DATABASE() AS db");
     console.log("DB_IN_USE:", d);
     console.log("Connection has been established successfully.");
-    return sequelize;
+    return db.sequelize;
   } catch (error) {
     console.error("Unable to connect to the database:", error);
     throw error;

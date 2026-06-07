@@ -4,6 +4,15 @@ const baseConfig = {
   dialect: "mysql",
   logging: false,
   define: { freezeTableName: true },
+  pool: {
+    max: 10,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+  },
+  dialectOptions: {
+    charset: "utf8mb4",
+  },
 };
 
 const fromEnv = {
@@ -14,14 +23,20 @@ const fromEnv = {
   port: Number(process.env.MYSQLPORT || 3306),
 };
 
-const productionUrlEnv = process.env.DATABASE_URL
-  ? "DATABASE_URL"
-  : process.env.MYSQL_URL
-    ? "MYSQL_URL"
-    : null;
+const shouldUseDatabaseUrl =
+  process.env.NODE_ENV === "production" ||
+  String(process.env.USE_DATABASE_URL || "").toLowerCase() === "true";
+
+const databaseUrlEnv = shouldUseDatabaseUrl
+  ? process.env.DATABASE_URL
+    ? "DATABASE_URL"
+    : process.env.MYSQL_URL
+      ? "MYSQL_URL"
+      : null
+  : null;
 
 const withUrlFallback = (config) => ({
-  ...(productionUrlEnv ? { use_env_variable: productionUrlEnv } : config),
+  ...(databaseUrlEnv ? { use_env_variable: databaseUrlEnv } : config),
   ...baseConfig,
 });
 
@@ -29,7 +44,7 @@ module.exports = {
   development: withUrlFallback({
     username: process.env.MYSQLUSER || "root",
     password: process.env.MYSQLPASSWORD || null,
-    database: process.env.MYSQLDATABASE || "jwt",
+    database: process.env.MYSQLDATABASE || "yt_language_app",
     host: process.env.MYSQLHOST || "127.0.0.1",
     port: Number(process.env.MYSQLPORT || 3306),
   }),
